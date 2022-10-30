@@ -18,8 +18,9 @@ const (
 )
 
 const (
-	googleInfoEndpoint   = `https://www.googleapis.com/userinfo/v2/me`
-	facebookInfoEndpoint = `https://graph.facebook.com/me?fields=name,email`
+	googleInfoEndpoint    = `https://www.googleapis.com/userinfo/v2/me`
+	facebookInfoEndpoint  = `https://graph.facebook.com/me?fields=name,email`
+	microsoftInfoEndpoint = `https://graph.microsoft.com/oidc/userinfo`
 )
 
 type googleMeResponse struct {
@@ -86,5 +87,38 @@ func FacebookUserDetails(ctx context.Context, cfg oauth2.Config, token *oauth2.T
 		OAuth2UID:   response.ID,
 		OAuth2Email: response.Email,
 		OAuth2Name:  response.Name,
+	}, nil
+}
+
+type microsoftMeResponse struct {
+	ID    string `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}
+
+func MicrosoftUserDetails(ctx context.Context, cfg oauth2.Config, token *oauth2.Token) (map[string]string, error) {
+	client := cfg.Client(ctx, token)
+	resp, err := clientGet(client, microsoftInfoEndpoint)
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+	byt, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to read body from microsoft oauth2 endpoint")
+	}
+
+	var userInfo microsoftMeResponse
+	if err = json.Unmarshal(byt, &userInfo); err != nil {
+		return nil, err
+	}
+
+	// log.Printf("Got User Profile from Microsoft: %+v\n", userInfo)
+
+	return map[string]string{
+		OAuth2UID:   userInfo.ID,
+		OAuth2Name:  userInfo.Name,
+		OAuth2Email: userInfo.Email,
 	}, nil
 }

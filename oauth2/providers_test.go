@@ -71,3 +71,27 @@ func TestFacebook(t *testing.T) {
 		t.Error("Name wrong:", name)
 	}
 }
+
+func TestMicrosoft(t *testing.T) {
+	t.Parallel()
+
+	cfg := *testProviders["microsoft"].OAuth2Config
+	tok := &oauth2.Token{
+		AccessToken:  "token",
+		TokenType:    "Bearer",
+		RefreshToken: "refresh",
+		Expiry:       time.Now().Add(60 * time.Minute),
+	}
+
+	details, err := MicrosoftUserDetails(context.Background(), cfg, tok)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if uid, ok := details[OAuth2UID]; !ok || uid != "id" {
+		t.Error("UID wrong:", uid)
+	}
+	if email, ok := details[OAuth2Email]; !ok || email != "email" {
+		t.Error("Email wrong:", email)
+	}
+}

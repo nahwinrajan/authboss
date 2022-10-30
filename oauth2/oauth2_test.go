@@ -14,6 +14,7 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/facebook"
 	"golang.org/x/oauth2/google"
+	"golang.org/x/oauth2/microsoft"
 )
 
 func init() {
@@ -46,6 +47,17 @@ var testProviders = map[string]authboss.OAuth2Provider{
 		},
 		FindUserDetails: FacebookUserDetails,
 	},
+	"microsoft": {
+		OAuth2Config: &oauth2.Config{
+			ClientID:     `jazz`,
+			ClientSecret: `hands`,
+			Scopes:       []string{`openid`, `profile`, `email`},
+			Endpoint:     microsoft.LiveConnectEndpoint,
+			// This is typically set by Init() but some tests rely on it's existence
+			RedirectURL: "https://www.example.com/auth/oauth2/callback/microsoft",
+		},
+		FindUserDetails: MicrosoftUserDetails,
+	},
 }
 
 var testToken = &oauth2.Token{
@@ -76,6 +88,7 @@ func TestInit(t *testing.T) {
 	gets := []string{
 		"/oauth2/facebook", "/oauth2/callback/facebook",
 		"/oauth2/google", "/oauth2/callback/google",
+		"/oauth2/microsoft", "/oauth2/callback/microsoft",
 	}
 	if err := router.HasGets(gets...); err != nil {
 		t.Error(err)
